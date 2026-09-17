@@ -158,7 +158,7 @@ public class Crate implements ConfigBacked {
         if (config.contains("Opening.Cooldown")) {
             int old = config.getInt("Opening.Cooldown");
             config.set("OpeningCooldown.Enabled", old != 0);
-            config.set("OpeningCooldown.Value", this.openingCooldownTime);
+            config.set("OpeningCooldown.Value", old);
             config.remove("Opening");
         }
 

@@ -2,6 +2,7 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>su.nightexpress.excellentcrates</groupId>
@@ -16,20 +17,25 @@
 
     <distributionManagement>
         <repository>
-            <id>nightexpress</id>
-            <url>https://repo.nightexpressdev.com/releases</url>
+            <id>nightexpress-releases</id>
+            <url>https://repo.nightexpressdev.com/releases/</url>
         </repository>
     </distributionManagement>
 
     <repositories>
         <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+            <id>nightexpress-releases</id>
+            <url>https://repo.nightexpressdev.com/releases/</url>
         </repository>
 
         <repository>
-            <id>nightexpress-releases</id>
-            <url>https://repo.nightexpressdev.com/releases</url>
+            <id>modrinth</id>
+            <url>https://api.modrinth.com/maven</url>
+        </repository>
+
+        <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
 
         <repository>
@@ -40,11 +46,6 @@
         <repository>
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
-        </repository>
-
-        <repository>
-            <id>maven</id>
-            <url>https://repo1.maven.org/maven2/</url>
         </repository>
 
         <repository>
@@ -62,8 +63,8 @@
         </dependency>
 
         <dependency>
-            <groupId>su.nightexpress.nightcore</groupId>
-            <artifactId>main</artifactId>
+            <groupId>maven.modrinth</groupId>
+            <artifactId>nightcore</artifactId>
             <version>2.10.0</version>
             <scope>provided</scope>
         </dependency>
@@ -93,19 +94,21 @@
     <build>
         <resources>
             <resource>
-                <directory>src/main/resources</directory> <!-- (your resources folder location) -->
-                <filtering>true
-                </filtering> <!-- this is the important part, it's what replaces, filters, all placeholders in the resources folder (such as ${project.version} in plugin.yml) -->
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
             </resource>
         </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>3.3.0</version>
+
                 <executions>
                     <execution>
                         <id>attach-sources</id>
+
                         <goals>
                             <goal>jar</goal>
                         </goals>
