@@ -67,7 +67,8 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
 
                 Map<String, LegacyCrateData> crateDataMap = this.gson.fromJson(
                         resultSet.getString(COLUMN_CRATE_DATA.getName()),
-                        new TypeToken<Map<String, LegacyCrateData>>(){}.getType()
+                        new TypeToken<Map<String, LegacyCrateData>>() {
+                        }.getType()
                 );
                 if (crateDataMap == null) return Collections.emptyList();
 
@@ -80,8 +81,7 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
                 //limits.removeIf(RewardData::isResetTime);
 
                 return limits;
-            }
-            catch (SQLException exception) {
+            } catch (SQLException exception) {
                 exception.printStackTrace();
                 return Collections.emptyList();
             }
@@ -91,23 +91,31 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
             try {
                 String crateId = resultSet.getString(COLUMN_CRATE_ID.getName());
                 String rewardId = resultSet.getString(COLUMN_REWARD_ID.getName());
-                LegacyLimitData limitData = this.gson.fromJson(resultSet.getString(columnRewardData.getName()), new TypeToken<LegacyLimitData>(){}.getType());
+                LegacyLimitData limitData = this.gson.fromJson(resultSet.getString(columnRewardData.getName()), new TypeToken<LegacyLimitData>() {
+                }.getType());
 
                 return new RewardData(crateId, rewardId, crateId, limitData.getAmount(), limitData.getExpireDate());
-            }
-            catch (SQLException exception) {
+            } catch (SQLException exception) {
                 exception.printStackTrace();
             }
             return null;
         };
+        try {
+            this.select(this.tableUsers, playerLimitLoader, SelectQuery::all).forEach(limits -> {
+                limits.forEach(this::insertRewardLimit);
+            });
 
-        this.select(this.tableUsers, playerLimitLoader, SelectQuery::all).forEach(limits -> {
-            limits.forEach(this::insertRewardLimit);
-        });
+            this.select(rewardDataTable, globalLimitLoader, SelectQuery::all).forEach(limit -> {
+                if (limit != null) {
+                    this.insertRewardLimit(limit);
+                }
+            });
 
-        this.select(rewardDataTable, globalLimitLoader, SelectQuery::all).forEach(this::insertRewardLimit);
-
-        this.dropColumn(rewardDataTable, columnRewardData);
+            this.dropColumn(rewardDataTable, columnRewardData);
+        } catch (RuntimeException exception) {
+            this.plugin.error("Could not migrate legacy reward limit data");
+            exception.printStackTrace();
+        }
     }
 
     @Override
