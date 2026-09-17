@@ -692,7 +692,7 @@ public class Crate implements ConfigBacked {
 
     @NotNull
     public Map<String, Cost> getCostMap() {
-        return this.costMap;
+        return Collections.unmodifiableMap(this.costMap);
     }
 
     @NotNull
@@ -815,7 +815,7 @@ public class Crate implements ConfigBacked {
 
     @NotNull
     public LinkedHashMap<String, Reward> getRewardsMap() {
-        return this.rewardMap;
+        return new LinkedHashMap<>(this.rewardMap);
     }
 
     @NotNull
@@ -886,7 +886,7 @@ public class Crate implements ConfigBacked {
 
     @NotNull
     public Set<Milestone> getMilestones() {
-        return this.milestones;
+        return new HashSet<>(this.milestones);
     }
 
     @Nullable
