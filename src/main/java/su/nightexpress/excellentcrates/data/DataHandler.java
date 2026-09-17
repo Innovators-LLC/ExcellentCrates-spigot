@@ -64,7 +64,12 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
         Function<ResultSet, List<RewardData>> playerLimitLoader = resultSet -> {
             try {
                 UUID uuid = UUID.fromString(resultSet.getString(COLUMN_USER_ID.getName()));
-                Map<String, LegacyCrateData> crateDataMap = this.gson.fromJson(resultSet.getString(COLUMN_CRATE_DATA.getName()), new TypeToken<Map<String, LegacyCrateData>>(){}.getType());
+
+                Map<String, LegacyCrateData> crateDataMap = this.gson.fromJson(
+                        resultSet.getString(COLUMN_CRATE_DATA.getName()),
+                        new TypeToken<Map<String, LegacyCrateData>>(){}.getType()
+                );
+                if (crateDataMap == null) return Collections.emptyList());
 
                 List<RewardData> limits = new ArrayList<>();
                 crateDataMap.forEach((crateId, crateData) -> {
@@ -78,7 +83,7 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
             }
             catch (SQLException exception) {
                 exception.printStackTrace();
-                return null;
+                return Collections.emptyList();
             }
         };
 
