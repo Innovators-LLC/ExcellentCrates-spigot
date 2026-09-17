@@ -84,6 +84,8 @@ public class CratesPlugin extends NightPlugin {
 
         this.dataHandler = new DataHandler(this);
         this.dataHandler.setup();
+        this.dataHandler.updateRewardLimits();
+
 
         this.dataManager = new DataManager(this);
         this.dataManager.setup();
@@ -108,7 +110,7 @@ public class CratesPlugin extends NightPlugin {
         this.editorManager = new EditorManager(this, this.dialogRegistry);
         this.editorManager.setup();
 
-        this.dataHandler.updateRewardLimits();
+
 
         if (Plugins.hasPlaceholderAPI()) {
             PlaceholderHook.setup(this);
