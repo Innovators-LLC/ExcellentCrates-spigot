@@ -114,7 +114,7 @@ public abstract class AbstractSpinner implements Spinner {
             return false;
         }
 
-        return this.tickCount == 0 || this.tickCount % this.tickInterval == 0L;
+        return this.tickCount == 0L || this.tickInterval <= 0L || this.tickCount % this.tickInterval == 0L;
     }
 
     protected abstract void onStop();
