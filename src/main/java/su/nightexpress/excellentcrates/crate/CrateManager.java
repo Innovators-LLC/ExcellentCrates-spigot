@@ -100,7 +100,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
         this.addListener(new CrateListener(this.plugin, this));
 
-        this.addAsyncTask(this::playCrateEffects, 1L);
+        this.addAsyncTask(() -> this.plugin.runTask(task -> this.playCrateEffects()), 1L);
         this.addAsyncTask(this::saveCrates, Config.CRATE_SAVE_INTERVAL.get());
     }
 
@@ -189,7 +189,11 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     private void loadCrates() {
         for (File file : FileUtil.getFiles(plugin.getDataFolder() + Config.DIR_CRATES, false)) {
-            String id = Strings.varStyle(FileConfig.getName(file)).orElseThrow(); // TODO Handle
+            String id = Strings.varStyle(FileConfig.getName(file)).orElse(null);
+            if (id == null) {
+                this.plugin.error("Could not load crate file'" + file.getName() + "': Invalid file name.");
+                continue;
+            }
 
             Crate crate = new Crate(plugin, file.toPath(), id);
             this.loadCrate(crate);
@@ -251,12 +255,12 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     }
 
     public boolean hasCrate(@NotNull String id) {
-        return this.crateByIdMap.containsKey(id);
+        return this.crateByIdMap.containsKey(id.toLowerCase());
     }
 
     @NotNull
     public Map<String, Rarity> getRarityByIdMap() {
-        return this.rarityByIdMap;
+        return Collections.unmodifiableMap(this.rarityByIdMap);
     }
 
     @NotNull
@@ -281,7 +285,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     @NotNull
     public Map<String, PreviewMenu> getPreviewByIdMap() {
-        return this.previewByIdMap;
+        return Collections.unmodifiableMap(this.previewByIdMap);
     }
 
     @Nullable
@@ -314,7 +318,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
 
     @NotNull
     public Map<String, Crate> getCratesMap() {
-        return this.crateByIdMap;
+        return Collections.unmodifiableMap(this.crateByIdMap);
     }
 
     @NotNull
@@ -414,21 +418,23 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
         String crateId = PDCUtil.getString(itemStack, Keys.linkToolCrateId).orElse(null);
         if (crateId == null) return false;
 
-        itemStack.setAmount(0);
         event.setUseItemInHand(Event.Result.DENY);
         event.setUseInteractedBlock(Event.Result.DENY);
 
         Crate crate = this.getCrateById(crateId);
-        if (crate != null) {
-            crate.clearBlockPositions();
-            crate.addBlockPosition(block.getLocation());
-            crate.recreateHologram();
-            crate.markDirty();
-            this.plugin.getEditorManager().openOptionsMenu(player, crate);
-        }
+        if (crate == null) return true;
+
+        itemStack.setAmount(0);
+
+        crate.clearBlockPositions();
+        crate.addBlockPosition(block.getLocation());
+        crate.recreateHologram();
+        crate.markDirty();
+        this.plugin.getEditorManager().openOptionsMenu(player, crate);
 
         return true;
     }
+
 
     public boolean dropCrateItem(@NotNull Crate crate, @NotNull Location location) {
         World world = location.getWorld();
@@ -729,7 +735,7 @@ public class CrateManager extends AbstractManager<CratesPlugin> {
     }
 
     public void playCrateEffects() {
-        this.getCrates().forEach(crate -> {
+        this.crateByIdMap.values().forEach(crate -> {
             if (!crate.isEffectEnabled()) return;
 
             CrateEffect effect = crate.getEffect();
