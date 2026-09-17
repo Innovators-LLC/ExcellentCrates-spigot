@@ -240,7 +240,7 @@ public class Crate implements ConfigBacked {
 
         for (String sId : config.getSection("Rewards.List")) {
             Reward reward = RewardFactory.read(this.plugin, this, sId, config, "Rewards.List." + sId);
-            this.rewardMap.put(sId, reward);
+            this.rewardMap.put(reward.getId(), reward);
         }
 
         // Load milestones only if the feature is enabled.
@@ -881,7 +881,7 @@ public class Crate implements ConfigBacked {
     }
 
     public void removeReward(@NotNull String id) {
-        this.rewardMap.remove(id);
+        this.rewardMap.remove(id.toLowerCase());
     }
 
     @NotNull
