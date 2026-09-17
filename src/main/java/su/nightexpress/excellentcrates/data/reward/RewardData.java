@@ -49,11 +49,11 @@ public class RewardData {
     }
 
     public boolean isOnCooldown() {
-        return !this.isCooldownExpired();
+        return this.cooldownUntil > 0L && !TimeUtil.isPassed(this.cooldownUntil);
     }
 
     public boolean isCooldownExpired() {
-        return this.cooldownUntil > 0L && TimeUtil.isPassed(this.cooldownUntil);
+        return this.cooldownUntil <= 0L || TimeUtil.isPassed(this.cooldownUntil);
     }
 
     public void addRoll(int amount) {
