@@ -69,7 +69,7 @@ public class DataHandler extends AbstractUserDataManager<CratesPlugin, CrateUser
                         resultSet.getString(COLUMN_CRATE_DATA.getName()),
                         new TypeToken<Map<String, LegacyCrateData>>(){}.getType()
                 );
-                if (crateDataMap == null) return Collections.emptyList());
+                if (crateDataMap == null) return Collections.emptyList();
 
                 List<RewardData> limits = new ArrayList<>();
                 crateDataMap.forEach((crateId, crateData) -> {
