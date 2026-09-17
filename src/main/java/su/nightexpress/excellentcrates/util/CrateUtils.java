@@ -20,7 +20,7 @@ public class CrateUtils {
     public static final int REWARD_ITEMS_LIMIT = 27;
 
     @NotNull
-    public static Set<Player> getPlayersforEffects(@NotNull Location location) {
+    public static Set<Player> getPlayersForEffects(@NotNull Location location) {
         World world = location.getWorld();
         if (world == null) return Collections.emptySet();
 
