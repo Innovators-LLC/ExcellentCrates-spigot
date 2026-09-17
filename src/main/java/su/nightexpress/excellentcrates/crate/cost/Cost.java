@@ -100,8 +100,9 @@ public class Cost implements Writeable {
     }
 
     public int countMaxOpenings(@NotNull Player player) {
-        return this.entries.stream().mapToInt(entry -> entry.countPossibleOpenings(player)).max().orElse(0);
+        return this.entries.stream().mapToInt(entry -> entry.countPossibleOpenings(player)).min().orElse(0);
     }
+
 
     @NotNull
     public String formatInline(@NotNull String delimiter) {
@@ -118,7 +119,7 @@ public class Cost implements Writeable {
     }
 
     public boolean isValid() {
-        return !this.isEmpty() && this.entries.stream().anyMatch(CostEntry::isValid);
+        return !this.isEmpty() && this.entries.stream().allMatch(CostEntry::isValid);
     }
 
     public boolean isAvailable() {

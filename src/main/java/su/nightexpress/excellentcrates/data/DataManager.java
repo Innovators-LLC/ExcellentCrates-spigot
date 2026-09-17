@@ -1,6 +1,7 @@
 package su.nightexpress.excellentcrates.data;
 
 import org.bukkit.entity.Player;
+import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import su.nightexpress.excellentcrates.CratesPlugin;
@@ -21,10 +22,10 @@ import java.util.stream.Collectors;
 
 public class DataManager extends AbstractManager<CratesPlugin> {
 
-    private final Map<String, GlobalCrateData> crateDataMap;
-    private final Map<RewardKey, RewardData>   rewardLimitMap;
+    private volatile Map<String, GlobalCrateData> crateDataMap;
+    private volatile Map<RewardKey, RewardData>   rewardLimitMap;
 
-    private boolean dataLoaded;
+    private volatile boolean dataLoaded;
 
     public DataManager(@NotNull CratesPlugin plugin) {
         super(plugin);
@@ -53,26 +54,38 @@ public class DataManager extends AbstractManager<CratesPlugin> {
         this.saveRewardLimits();
     }
 
+
     public void saveCrateDatas() {
         Set<GlobalCrateData> dataSet = this.getCrateDatas().stream()
-            .filter(GlobalCrateData::isDirty)
-            .peek(data -> data.setDirty(false))
-            .collect(Collectors.toSet());
-        if (dataSet.isEmpty()) return;
+                .filter(GlobalCrateData::isDirty)
+                .peek(data -> data.setDirty(false))
+                .collect(Collectors.toSet());
+        if(dataSet.isEmpty()) return;
 
-        this.plugin.getDataHandler().updateCrateDatas(dataSet);
-        //this.plugin.debug("Saved " + dataSet.size() + " crate datas.");
+        try {
+            this.plugin.getDataHandler().updateCrateDatas(dataSet);
+        }
+        catch(RuntimeException exception) {
+            dataSet.forEach(data -> data.setDirty(true));
+            throw exception;
+        }
     }
+
 
     public void saveRewardLimits() {
         Set<RewardData> limits = this.getRewardLimits().stream()
-            .filter(RewardData::isSaveRequired)
-            .peek(data -> data.setSaveRequired(false))
-            .collect(Collectors.toSet());
+                .filter(RewardData::isSaveRequired)
+                .peek(data -> data.setSaveRequired(false))
+                .collect(Collectors.toSet());
         if (limits.isEmpty()) return;
 
-        this.plugin.getDataHandler().updateRewardLimits(limits);
-        //this.plugin.debug("Saved " + limits.size() + " reward limits.");
+        try {
+            this.plugin.getDataHandler().updateRewardLimits(limits);
+        }
+        catch(RuntimeException exception) {
+            limits.forEach(data -> data.setSaveRequired(true));
+            throw exception;
+        }
     }
 
     public void loadData() {
@@ -83,19 +96,25 @@ public class DataManager extends AbstractManager<CratesPlugin> {
     }
 
     public void loadCrateDatas() {
-        this.crateDataMap.clear();
 
+        Map<String, GlobalCrateData> loaded = new ConcurrentHashMap<>();
         this.plugin.getDataHandler().loadCrateDatas().forEach(data -> {
-            this.crateDataMap.put(data.getCrateId(), data);
+            loaded.put(data.getCrateId(), data);
         });
+
+        this.crateDataMap = loaded;
 
         //this.plugin.debug("Loaded " + this.crateDataMap.size() + " crate datas.");
     }
 
     public void loadRewardLimits() {
-        this.rewardLimitMap.clear();
+        Map<RewardKey, RewardData> loaded = new ConcurrentHashMap<>();
 
-        this.plugin.getDataHandler().loadRewardLimits().forEach(this::addRewardLimit);
+        this.plugin.getDataHandler().loadRewardLimits().forEach(limit -> {
+            loaded.put(getRewardKey(limit), limit);
+        });
+
+        this.rewardLimitMap = loaded;
 
         //this.plugin.debug("Loaded " + this.rewardLimitMap.size() + " reward limit datas.");
     }
