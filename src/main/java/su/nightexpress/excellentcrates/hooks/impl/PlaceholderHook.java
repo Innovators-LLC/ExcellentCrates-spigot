@@ -18,6 +18,7 @@ import su.nightexpress.nightcore.util.NumberUtil;
 import su.nightexpress.nightcore.util.profile.CachedProfile;
 import su.nightexpress.nightcore.util.time.TimeFormats;
 
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -25,11 +26,16 @@ import java.util.function.BiFunction;
 public class PlaceholderHook {
 
     private static Expansion expansion;
+    private static ItemExpansion itemExpansion;
 
     public static void setup(@NotNull CratesPlugin plugin) {
         if (expansion == null) {
             expansion = new Expansion(plugin);
             expansion.register();
+        }
+        if (itemExpansion == null) {
+            itemExpansion = new ItemExpansion(plugin);
+            itemExpansion.register();
         }
     }
 
@@ -37,6 +43,10 @@ public class PlaceholderHook {
         if (expansion != null) {
             expansion.unregister();
             expansion = null;
+        }
+        if (itemExpansion != null) {
+            itemExpansion.unregister();
+            itemExpansion = null;
         }
     }
 
@@ -167,6 +177,79 @@ public class PlaceholderHook {
             }
 
             return null;
+        }
+    }
+
+    private static class ItemExpansion extends PlaceholderExpansion {
+
+        private static final long ROTATE_INTERVAL = 2000L;
+        private static final long FADE_DURATION   = 500L;
+        private static final String[] FADE_COLORS = {"&#404040", "&#606060", "&#909090", "&#C0C0C0", "&#FFFFFF"};
+
+        private final CratesPlugin plugin;
+
+        public ItemExpansion(@NotNull CratesPlugin plugin) {
+            this.plugin = plugin;
+        }
+
+        @Override
+        @NotNull
+        public String getIdentifier() {
+            return "item";
+        }
+
+        @Override
+        @NotNull
+        public String getAuthor() {
+            return this.plugin.getDescription().getAuthors().getFirst();
+        }
+
+        @Override
+        @NotNull
+        public String getVersion() {
+            return this.plugin.getDescription().getVersion();
+        }
+
+        @Override
+        public boolean persist() {
+            return true;
+        }
+
+        @Nullable
+        private String getRotatingRewardName(@NotNull String crateId) {
+            Crate crate = this.plugin.getCrateManager().getCrateById(crateId);
+            if (crate == null) return null;
+
+            List<String> names = crate.getRewards().stream()
+                .map(Reward::getName)
+                .filter(name -> !name.isBlank())
+                .toList();
+            if (names.isEmpty()) return null;
+
+            long time = System.currentTimeMillis();
+            int index = (int) ((time / ROTATE_INTERVAL) % names.size());
+            String name = names.get(index);
+
+            long elapsed = time % ROTATE_INTERVAL;
+            if (elapsed >= FADE_DURATION) return name;
+
+            int fadeStep = (int) (elapsed / (FADE_DURATION / FADE_COLORS.length));
+            return FADE_COLORS[fadeStep] + stripColors(name);
+        }
+
+        @NotNull
+        private String stripColors(@NotNull String text) {
+            return text
+                .replaceAll("(?i)(?:&|§)#[0-9a-f]{6}", "")
+                .replaceAll("(?i)(?:&|§)[0-9a-fk-orx]", "");
+        }
+
+        @Override
+        public String onPlaceholderRequest(@Nullable Player player, @NotNull String params) {
+            String prefix = "rotate_";
+            if (!params.startsWith(prefix)) return null;
+
+            return this.getRotatingRewardName(params.substring(prefix.length()));
         }
     }
 }
